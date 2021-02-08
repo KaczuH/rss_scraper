@@ -1,15 +1,14 @@
 import logging
 from datetime import timedelta
 
-from django.core.exceptions import ImproperlyConfigured
-from django.utils.translation import gettext_lazy as _
-
 import environ
 import sentry_sdk
+from celery.schedules import crontab
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.translation import gettext_lazy as _
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
-
 
 env = environ.Env()
 root = environ.Path(__file__) - 2
@@ -36,7 +35,7 @@ INSTALLED_APPS = (
     "drf_yasg",
     "djoser",
     "config",
-    "rates"
+    "rates",
 )
 
 MIDDLEWARE = (
@@ -93,11 +92,15 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
     "NON_FIELD_ERRORS_KEY": "errors",
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
 }
 
-
+# --- SUPERUSER ---
+POPULATE_SUPERUSER = env.bool("POPULATE_SUPERUSER", default=False)
+SUPERUSER_EMAIL = env("SUPERUSER_EMAIL", default="")
+SUPERUSER_PASSWORD = env("SUPERUSER_PASSWORD", default="")
+SUPERUSER_USERNAME = env("SUPERUSER_USERNAME", default="")
 # --- AUTH ---
 SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("JWT",),
@@ -142,10 +145,7 @@ USE_I18N = True
 USE_L10N = True
 LANGUAGE_CODE = "en-us"
 
-LANGUAGES = (
-    ("en", _("English")),
-    ("pl", _("Polish")),
-)
+LANGUAGES = (("en", _("English")), ("pl", _("Polish")))
 LOCALE_PATHS = (root("locale"),)
 
 # --- DATABASE ---
@@ -158,7 +158,12 @@ DATABASES = {
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/2")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://redis:6379/3")
 CELERY_DEFAULT_QUEUE = env("CELERY_DEFAULT_QUEUE", default="default")
-CELERY_BEAT_SCHEDULE = {}
+CELERY_BEAT_SCHEDULE = {
+    "fetch_exchange_rates": {
+        "task": "rates.tasks.fetch_exchange_rates",
+        "schedule": crontab(hour=16, minute=30),  # ECB updates rates at 16:00 CET
+    }
+}
 
 # --- CACHE ---
 CACHES = {
