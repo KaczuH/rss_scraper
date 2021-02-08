@@ -168,9 +168,10 @@ CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/2")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://redis:6379/3")
 CELERY_DEFAULT_QUEUE = env("CELERY_DEFAULT_QUEUE", default="default")
 CELERY_BEAT_SCHEDULE = {
+    # ECB updates rates at 16:00 CET, task runs at 16:30 CET (15:30 UTC)
     "fetch_exchange_rates": {
         "task": "rates.tasks.fetch_exchange_rates",
-        "schedule": crontab(hour=16, minute=30),  # ECB updates rates at 16:00 CET
+        "schedule": crontab(hour=15, minute=30),
     }
 }
 

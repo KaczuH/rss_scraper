@@ -14,7 +14,7 @@ along with all available currencies. The exchange rates will be populated from a
 
 
 ## Rates update
-The task is scheduled using celerybeat to run at 16:30 every day, 
+The task is scheduled using celerybeat to run at 16:30 CET every day, 
 because the ECB updates the rates at about 16:00 CET 
 (source: https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html).
 
