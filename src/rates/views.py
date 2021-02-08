@@ -12,7 +12,7 @@ from .serializers import CurrencySerializer, ExchangeRateLogSerializer
 
 class ExchangeRateLogsViewSet(ListModelMixin, GenericViewSet):
     permission_classes = [AllowAny]
-    queryset = ExchangeRateLog.objects.all()
+    queryset = ExchangeRateLog.objects.all().select_related("currency")
     serializer_class = ExchangeRateLogSerializer
 
     def get_queryset(self):
