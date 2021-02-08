@@ -2,8 +2,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class ExchangeRate(models.Model):
-    class Currencies(models.TextChoices):
+class Currency(models.Model):
+    class Codes(models.TextChoices):
         JPY = "JPY", _("Japanese yen")
         BGN = "BGN", _("Bulgarian lev")
         CZK = "CZK", _("Czech koruna")
@@ -36,7 +36,38 @@ class ExchangeRate(models.Model):
         THB = "THB", _("Thai baht")
         ZAR = "ZAR", _("South African rand")
 
-    currency = models.CharField(_("currency"), max_length=3, choices=Currencies.choices)
+    code = models.CharField(_("code"), max_length=3, choices=Codes.choices, unique=True)
+    update = models.BooleanField(_("update"), default=True)
+    last_fetched = models.DateTimeField(
+        _("last fetched"),
+        null=True,
+        blank=True,
+        help_text=_("Last successful update from ecb rss feed."),
+    )
+    exchange_rate = models.DecimalField(
+        _("exchange rate"), max_digits=20, decimal_places=4, null=True, blank=True
+    )
+    ecb_updated = models.DateTimeField(_("ecb updated"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("currency")
+        verbose_name_plural = _("currencies")
+
+    def __str__(self):
+        return self.get_code_display()
+
+    @property
+    def description(self):
+        return f"1 EUR buys {self.exchange_rate} {self} ({self.code})"
+
+
+class ExchangeRateLog(models.Model):
+    currency = models.ForeignKey(
+        Currency,
+        models.CASCADE,
+        verbose_name=_("currency"),
+        related_name="exchange_rate_logs",
+    )
     exchange_rate = models.DecimalField(
         _("exchange rate"), max_digits=20, decimal_places=4
     )
@@ -44,12 +75,5 @@ class ExchangeRate(models.Model):
 
     class Meta:
         unique_together = ("currency", "ecb_updated")
-        verbose_name = _("exchange rate")
-        verbose_name_plural = _("exchange rates")
-
-    def __str__(self):
-        return self.get_currency_display()
-
-    @property
-    def description(self):
-        return f"1 EUR buys {self.exchange_rate} {self.get_currency_display()} ({self.currency})"
+        verbose_name = _("exchange rate log")
+        verbose_name_plural = _("exchange rate logs")

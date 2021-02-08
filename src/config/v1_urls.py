@@ -3,8 +3,7 @@ from django.urls import include, path
 
 
 urlpatterns = [
-    path("auth/", include("djoser.urls")),
-    path("auth/", include("djoser.urls.jwt")),
+    path("", include("rates.urls")),
 ]
 
 if settings.DEBUG:
